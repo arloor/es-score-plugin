@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<assembly>
+    <id>release</id>
+    <formats>
+        <format>zip</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+    <dependencySets>
+        <dependencySet>
+            <outputDirectory>/elasticsearch/</outputDirectory>
+            <useProjectArtifact>true</useProjectArtifact>
+            <useTransitiveDependencies>true</useTransitiveDependencies>
+        </dependencySet>
+    </dependencySets>
+    <files>
+        <file>
+            <source>target/classes/plugin-descriptor.properties</source>
+            <outputDirectory>/elasticsearch/</outputDirectory>
+        </file>
+<!--        <file>-->
+<!--            <source>src/main/resources/plugin-security.policy</source>-->
+<!--            <outputDirectory>/elasticsearch/</outputDirectory>-->
+<!--        </file>-->
+    </files>
+</assembly>
