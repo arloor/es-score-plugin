@@ -6,7 +6,7 @@
 
     <groupId>org.example</groupId>
     <artifactId>es-score-plugin</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>6.6.2</version>
     <name>es-plugin-hello</name>
     <description>es-expert-script-to-score</description>
 

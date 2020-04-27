@@ -7,7 +7,7 @@
     <includeBaseDirectory>false</includeBaseDirectory>
     <dependencySets>
         <dependencySet>
-            <outputDirectory>/elasticsearch/</outputDirectory>
+            <outputDirectory>/es-score-plugin/</outputDirectory>
             <useProjectArtifact>true</useProjectArtifact>
             <useTransitiveDependencies>true</useTransitiveDependencies>
         </dependencySet>
@@ -15,7 +15,7 @@
     <files>
         <file>
             <source>target/classes/plugin-descriptor.properties</source>
-            <outputDirectory>/elasticsearch/</outputDirectory>
+            <outputDirectory>/es-score-plugin/</outputDirectory>
         </file>
 <!--        <file>-->
 <!--            <source>src/main/resources/plugin-security.policy</source>-->
