@@ -6,14 +6,14 @@ import java.util.List;
 import java.util.Map;
 
 public class MatchScore {
+
+    private static final int weight =5;
+
     public static void main(String[] args) {
         String query = "有重复字符串哈哈哈的重复测试串";
         String value = "测试字符串以获得哈哈最小的误差重复测试";
 
-        query = query.toLowerCase();
-        if (query.length() > 30) {
-            query = query.substring(0, 30);
-        }
+
         QueryMetaInfo queryMetaInfo = QueryMetaInfo.parseQuery(query);
         System.out.println(scoreWrapper(value, queryMetaInfo));
     }
@@ -53,7 +53,7 @@ public class MatchScore {
                 }
                 // 打印最长的phase
 //                System.out.println("==max" + " " + maxLengthPhase);
-                matchScore += Math.pow(2, maxLength);
+                matchScore += Math.pow(weight, maxLength);
                 j = maxUnmatch;
             }
             //
@@ -88,9 +88,14 @@ public class MatchScore {
         }
 
         public static final QueryMetaInfo parseQuery(String query) {
+            query = query.toLowerCase();
+            if (query.length() > 32) {
+                query = query.substring(0, 32);
+            }
+
             // 计算query串中的位置信息
             char[] querys = query.toCharArray();
-            Map<Character, List<Integer>> charIndexs = new HashMap<>();
+            Map<Character, List<Integer>> charIndexs = new HashMap<>(32);
             for (int i = 0; i < querys.length; i++) {
                 charIndexs.computeIfAbsent(querys[i], ArrayList::new);
                 charIndexs.get(querys[i]).add(i);

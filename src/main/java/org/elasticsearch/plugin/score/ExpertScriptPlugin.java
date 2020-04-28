@@ -179,10 +179,6 @@ public class ExpertScriptPlugin extends Plugin implements ScriptPlugin {
             this.lookup = lookup;
             fields = (List<String>) params.get("field");
             String query = params.get("query").toString();
-            query = query.toLowerCase();
-            if (query.length() > 30) {
-                query = query.substring(0, 30);
-            }
             this.queryMetaInfo = MatchScore.QueryMetaInfo.parseQuery(query);
         }
 
