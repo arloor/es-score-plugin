@@ -1,4 +1,4 @@
-package org.elasticsearch.plugin.score;/*
+/*
  * Licensed to Elasticsearch under one or more contributor
  * license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright
@@ -16,6 +16,8 @@ package org.elasticsearch.plugin.score;/*
  * specific language governing permissions and limitations
  * under the License.
  */
+
+package org.elasticsearch.plugin.score;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -68,7 +70,11 @@ public class ExpertScriptPlugin extends Plugin implements ScriptPlugin {
             }
             // we use the script "source" as the script identifier
             if ("horspool".equals(scriptSource)) {
-                ScoreScript.Factory factory = PureDfLeafFactory::new;
+                ScoreScript.Factory factory = HorspoolLeafFactory::new;
+                return context.factoryClazz.cast(factory);
+            }
+            if ("match_score".equals(scriptSource)) {
+                ScoreScript.Factory factory = MatchScoreLeafFactory::new;
                 return context.factoryClazz.cast(factory);
             }
             throw new IllegalArgumentException("Unknown script name "
@@ -80,13 +86,13 @@ public class ExpertScriptPlugin extends Plugin implements ScriptPlugin {
             // optionally close resources
         }
 
-        private static class PureDfLeafFactory implements LeafFactory {
+        private static class HorspoolLeafFactory implements LeafFactory {
             private final Map<String, Object> params;
             private final SearchLookup lookup;
             private final List<String> fields;
             private final String query;
 
-            private PureDfLeafFactory(
+            private HorspoolLeafFactory(
                     Map<String, Object> params, SearchLookup lookup) {
                 if (params.containsKey("field") == false) {
                     throw new IllegalArgumentException(
@@ -138,16 +144,92 @@ public class ExpertScriptPlugin extends Plugin implements ScriptPlugin {
                             } else {
                                 return;
                             }
-                            double horspool = Horspool.calHorspoolScoreWrapper(value, query);
-                            horspool = horspool * weight;
-                            if (horspool > maxScore[0]) {
-                                maxScore[0] = horspool;
+                            double score = Horspool.calHorspoolScoreWrapper(value, query);
+//                            double score=MatchScore.scoreWrapper(value,query);
+                            score = score * weight;
+                            if (score > maxScore[0]) {
+                                maxScore[0] = score;
                             }
                         });
                         return maxScore[0];
                     }
                 };
             }
+        }
+    }
+
+    private static class MatchScoreLeafFactory implements LeafFactory {
+        private final Map<String, Object> params;
+        private final SearchLookup lookup;
+        private final List<String> fields;
+        private final MatchScore.QueryMetaInfo queryMetaInfo;
+
+        private MatchScoreLeafFactory(
+                Map<String, Object> params, SearchLookup lookup) {
+            if (params.containsKey("field") == false) {
+                throw new IllegalArgumentException(
+                    "Missing parameter [field]");
+            }
+            if (params.containsKey("query") == false) {
+                throw new IllegalArgumentException(
+                    "Missing parameter [query]");
+            }
+
+            this.params = params;
+            this.lookup = lookup;
+            fields = (List<String>) params.get("field");
+            String query = params.get("query").toString();
+            query = query.toLowerCase();
+            if (query.length() > 30) {
+                query = query.substring(0, 30);
+            }
+            this.queryMetaInfo = MatchScore.QueryMetaInfo.parseQuery(query);
+        }
+
+        @Override
+        public boolean needs_score() {
+            return true;  // Return true if the script needs the score
+        }
+
+        @Override
+        public ScoreScript newInstance(LeafReaderContext context)
+            throws IOException {
+            LeafReader reader = context.reader();
+            SourceLookup source = lookup.getLeafSearchLookup(context).source();
+            LeafDocLookup doc = lookup.getLeafSearchLookup(context).doc();
+            return new ScoreScript(params, lookup, context) {
+                int currentDocid = -1;
+
+                @Override
+                public void setDocument(int docid) {
+                    currentDocid = docid;
+                }
+
+                @Override
+                public double execute() {
+                    //获取原来的评分
+                    double rawScore = this.get_score();
+                    final double[] maxScore = {0.0};
+                    fields.forEach(fieldWeight -> {
+                        String[] split = fieldWeight.split("\\^");
+                        String field = split[0];
+                        double weight = split.length == 2 ? Double.parseDouble(split[1]) : 1;
+                        source.setSegmentAndDocument(context, currentDocid);
+                        String value = "";
+                        if (source.containsKey(field)) {
+                            value = String.valueOf(source.get(field));
+                        } else {
+                            return;
+                        }
+                            double score= MatchScore.scoreWrapper(value,queryMetaInfo);
+                        score = score * weight;
+                        if (score > maxScore[0]) {
+                            maxScore[0] = score;
+                        }
+                    });
+                    return maxScore[0];
+                }
+            };
         }
     }
     // end::expert_engine

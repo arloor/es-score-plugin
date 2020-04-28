@@ -81,7 +81,7 @@ public class Horspool {
             score = score + (long) Math.pow(10, entry.getValue());
         }
 
-        score = Math.max(score / 2, score - (n - matchChars) * 5);
+        score = Math.max(score / 2, score - (n - matchChars) * 2);
         return score;
     }
 
