@@ -217,7 +217,7 @@ public class ExpertScriptPlugin extends Plugin implements ScriptPlugin {
                         } else {
                             return;
                         }
-                            double score= MatchScore.scoreWrapper(value,queryMetaInfo);
+                        double score = MatchScore.scoreWrapper(value, queryMetaInfo);
                         score = score * weight;
                         if (score > maxScore[0]) {
                             maxScore[0] = score;
