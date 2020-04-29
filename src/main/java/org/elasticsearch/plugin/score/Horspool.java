@@ -117,8 +117,8 @@ public class Horspool {
         return score;
     }
 
-    private static boolean empty(String s){
-        return s == null ||s.trim().length() == 0;
+    private static boolean empty(String s) {
+        return s == null || s.trim().length() == 0;
     }
 
     public static long calHorspoolScoreWrapper(String text, String pattern) {

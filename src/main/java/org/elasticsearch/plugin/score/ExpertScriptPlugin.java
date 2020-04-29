@@ -1,22 +1,3 @@
-/*
- * Licensed to Elasticsearch under one or more contributor
- * license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright
- * ownership. Elasticsearch licenses this file to you under
- * the Apache License, Version 2.0 (the "License"); you may
- * not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
-
 package org.elasticsearch.plugin.score;
 
 import org.apache.logging.log4j.LogManager;
@@ -77,6 +58,12 @@ public class ExpertScriptPlugin extends Plugin implements ScriptPlugin {
                 ScoreScript.Factory factory = MatchScoreLeafFactory::new;
                 return context.factoryClazz.cast(factory);
             }
+
+            if ("term_score".equals(scriptSource)) {
+                ScoreScript.Factory factory = TermScoreLeafFactory::new;
+                return context.factoryClazz.cast(factory);
+            }
+
             throw new IllegalArgumentException("Unknown script name "
                 + scriptSource);
         }
@@ -162,7 +149,7 @@ public class ExpertScriptPlugin extends Plugin implements ScriptPlugin {
         private final Map<String, Object> params;
         private final SearchLookup lookup;
         private final List<String> fields;
-        private final MatchScore.QueryMetaInfo queryMetaInfo;
+        private final MatchScore.MatchsMetaInfo matchsMetaInfo;
 
         private MatchScoreLeafFactory(
                 Map<String, Object> params, SearchLookup lookup) {
@@ -179,7 +166,7 @@ public class ExpertScriptPlugin extends Plugin implements ScriptPlugin {
             this.lookup = lookup;
             fields = (List<String>) params.get("field");
             String query = params.get("query").toString();
-            this.queryMetaInfo = MatchScore.QueryMetaInfo.parseQuery(query);
+            this.matchsMetaInfo = MatchScore.MatchsMetaInfo.parseQuery(query);
         }
 
         @Override
@@ -217,7 +204,78 @@ public class ExpertScriptPlugin extends Plugin implements ScriptPlugin {
                         } else {
                             return;
                         }
-                        double score = MatchScore.scoreWrapper(value, queryMetaInfo);
+                        double score = MatchScore.scoreWrapper(value, matchsMetaInfo);
+                        score = score * weight;
+                        if (score > maxScore[0]) {
+                            maxScore[0] = score;
+                        }
+                    });
+                    return maxScore[0];
+                }
+            };
+        }
+    }
+
+    private static class TermScoreLeafFactory implements LeafFactory {
+        private final Map<String, Object> params;
+        private final SearchLookup lookup;
+        private final List<String> fields;
+        private final TermScore.TermsMetaInfo queryMetaInfo;
+
+        private TermScoreLeafFactory(
+                Map<String, Object> params, SearchLookup lookup) {
+            if (params.containsKey("field") == false) {
+                throw new IllegalArgumentException(
+                    "Missing parameter [field]");
+            }
+            if (params.containsKey("query") == false) {
+                throw new IllegalArgumentException(
+                    "Missing parameter [query]");
+            }
+
+            this.params = params;
+            this.lookup = lookup;
+            fields = (List<String>) params.get("field");
+            String query = params.get("query").toString();
+            this.queryMetaInfo = TermScore.TermsMetaInfo.parseQuery(query);
+        }
+
+        @Override
+        public boolean needs_score() {
+            return true;  // Return true if the script needs the score
+        }
+
+        @Override
+        public ScoreScript newInstance(LeafReaderContext context)
+            throws IOException {
+            LeafReader reader = context.reader();
+            SourceLookup source = lookup.getLeafSearchLookup(context).source();
+            LeafDocLookup doc = lookup.getLeafSearchLookup(context).doc();
+            return new ScoreScript(params, lookup, context) {
+                int currentDocid = -1;
+
+                @Override
+                public void setDocument(int docid) {
+                    currentDocid = docid;
+                }
+
+                @Override
+                public double execute() {
+                    //获取原来的评分
+                    double rawScore = this.get_score();
+                    final double[] maxScore = {0.0};
+                    fields.forEach(fieldWeight -> {
+                        String[] split = fieldWeight.split("\\^");
+                        String field = split[0];
+                        double weight = split.length == 2 ? Double.parseDouble(split[1]) : 1;
+                        source.setSegmentAndDocument(context, currentDocid);
+                        String value = "";
+                        if (source.containsKey(field)) {
+                            value = String.valueOf(source.get(field));
+                        } else {
+                            return;
+                        }
+                        double score = TermScore.scoreWrapper(value, queryMetaInfo);
                         score = score * weight;
                         if (score > maxScore[0]) {
                             maxScore[0] = score;
