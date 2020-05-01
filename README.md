@@ -1,8 +1,8 @@
-## elasticsearch horspool评分插件
+## elasticsearch评分插件
 
 拓展script_score来实现自定义评分方式的es插件
 
-使用horspool来计算文档评分，而不是es内置的bm25算法
+使用自定义评分算法来计算文档评分，而不是es内置的bm25算法
 
 使用:
 
@@ -20,7 +20,7 @@
         {
           "script_score": {
             "script": {
-              "source": "horspool",
+              "source": "term_score",
               "lang": "expert_scripts",
               "params": {
                 "field": ["title^2","body^1"],
