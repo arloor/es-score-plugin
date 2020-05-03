@@ -1,7 +1,5 @@
 package org.elasticsearch.plugin.score;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -17,8 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 public class TermScore {
-    protected static final Logger logger = LogManager.getLogger(TermScore.class);
-    private static final int weight = 2;
+    private static final int weight = 4;
 
     public static void main(String[] args) {
         String query = "asdas 100.00 有重复字符串哈哈哈的重复测试串";
@@ -111,7 +108,6 @@ public class TermScore {
                 continue;
             }
         }
-        logger.info("term_score: "+ termScore);
         return termScore;
     }
 
