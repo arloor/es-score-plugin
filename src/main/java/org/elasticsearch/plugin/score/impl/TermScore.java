@@ -1,4 +1,4 @@
-package org.elasticsearch.plugin.score;
+package org.elasticsearch.plugin.score.impl;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
@@ -37,8 +37,8 @@ public class TermScore {
      * continue：从匹配串最长匹配的下一term继续(这么做是为了避免重复积分和提升效率)
      * }
      *
-     * @param value  aa
-     * @param termsMetaInfo  aaa
+     * @param value         aa
+     * @param termsMetaInfo aaa
      * @return aaaa
      */
 
