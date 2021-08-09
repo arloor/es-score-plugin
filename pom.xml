@@ -13,7 +13,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
-        <es.version>6.6.2</es.version>
+        <es.version>6.8.17</es.version>
         <es.plugin.name>es-score-plugin</es.plugin.name>
         <es.plugin.classname>org.elasticsearch.plugin.score.ExpertScriptPlugin</es.plugin.classname>
         <es.plugin.java.version>1.8</es.plugin.java.version>
